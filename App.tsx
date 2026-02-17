@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import GameCanvas from './components/GameCanvas';
 import LevelEditor from './components/LevelEditor';
@@ -20,8 +19,6 @@ const App: React.FC = () => {
     if (sharedLevelData) {
       try {
         const decoded = JSON.parse(atob(sharedLevelData));
-        // Save shared level to local storage as a "new" level if it doesn't conflict
-        // Or just allow immediate play. For now, let's offer to import it.
         if (confirm(`A shared Sector (${decoded.id}) has been detected. Import to your local map?`)) {
           localStorage.setItem(`orbital_level_${decoded.id}`, JSON.stringify(decoded));
           if (decoded.id > levelsCount) {
@@ -145,8 +142,10 @@ const App: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-16 text-center">
               {Array.from({ length: levelsCount }).map((_, i) => {
                 const id = i + 1; 
-                const isLocked = id > unlockedLevel;
                 const isModified = !!localStorage.getItem(`orbital_level_${id}`);
+                // Modified/Designed levels are ALWAYS playable, even if ahead of standard progression
+                const isLocked = id > unlockedLevel && !isModified;
+                
                 return (
                   <div key={id} className="relative group">
                     <button 
@@ -155,7 +154,9 @@ const App: React.FC = () => {
                       className={`w-full aspect-square rounded-[2rem] font-black text-4xl flex items-center justify-center transition-all active:scale-90 border-4 cursor-pointer relative
                         ${isLocked 
                           ? 'bg-black/40 border-white/5 opacity-30 grayscale pointer-events-none' 
-                          : 'bg-cyan-900/20 border-[#00D2FF] text-[#00D2FF] hover:bg-[#00D2FF] hover:text-black hover:shadow-[0_0_30px_rgba(0,210,255,0.3)]'
+                          : isModified 
+                            ? 'bg-yellow-900/20 border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black hover:shadow-[0_0_30px_rgba(234,179,8,0.3)]'
+                            : 'bg-cyan-900/20 border-[#00D2FF] text-[#00D2FF] hover:bg-[#00D2FF] hover:text-black hover:shadow-[0_0_30px_rgba(0,210,255,0.3)]'
                         }`}
                     >
                       {isLocked ? <i className="fa-solid fa-lock text-xl"></i> : id}
