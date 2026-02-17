@@ -109,34 +109,35 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
       const length = level.finishLineX;
       
       let currX = 400;
-      while (currX < length - 400) {
-        const spacing = 320 + Math.random() * 150;
+      while (currX < length - 450) {
+        // Reduced spacing (max 420) to ensure hooks are always reachable
+        const spacing = 280 + Math.random() * 140;
         newHookPoints.push({
           id: `h-${currX}`,
           x: currX,
-          y: 200 + Math.random() * 300
+          y: 220 + Math.random() * 260
         });
 
-        if (Math.random() > 0.6) {
+        if (Math.random() > 0.7) {
           const obsX = currX + spacing / 2;
-          const isHazard = Math.random() > 0.7;
+          const isHazard = Math.random() > 0.8;
           newObstacles.push({
             id: `o-${obsX}`,
             x: obsX,
-            y: Math.random() > 0.5 ? 100 : 700,
+            y: Math.random() > 0.5 ? 80 : 720,
             width: isHazard ? 20 : 50,
             height: 400,
             type: isHazard ? ObstacleType.LASER : ObstacleType.WALL
           });
         }
 
-        if (Math.random() > 0.8) {
+        if (Math.random() > 0.85) {
           newBouncers.push({
             id: `b-${currX}`,
             x: currX + spacing / 2,
-            y: 850,
-            width: 150,
-            height: 30
+            y: 880,
+            width: 160,
+            height: 35
           });
         }
         currX += spacing;
@@ -158,7 +159,7 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
     const url = new URL(window.location.href);
     url.searchParams.set('levelData', encoded);
     navigator.clipboard.writeText(url.toString());
-    alert("Publish Link copied! Anyone with this link can play your sector.");
+    alert("Publish Link copied!");
   };
 
   if (isTesting) {
@@ -172,9 +173,10 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
         />
         <button 
           onClick={() => setIsTesting(false)} 
-          className="absolute top-8 left-8 bg-red-600 text-white px-6 py-3 rounded-2xl font-black shadow-2xl hover:scale-105 active:scale-95 transition-all uppercase z-[100]"
+          className="absolute top-8 left-8 bg-red-600 text-white px-6 py-3 rounded-2xl font-black shadow-2xl hover:scale-105 active:scale-95 transition-all uppercase z-[100] flex items-center space-x-2 border-2 border-white/20"
         >
-          Stop Test
+          <i className="fa-solid fa-stop"></i>
+          <span>Stop Test</span>
         </button>
       </div>
     );
@@ -229,6 +231,9 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
           </button>
           <button onClick={shareLevel} className="bg-purple-600 text-white px-4 md:px-0 md:w-full py-3 rounded-xl font-black text-[10px] md:text-sm hover:bg-purple-500 transition-all uppercase border border-white/10 flex items-center justify-center space-x-2">
             <i className="fa-solid fa-share"></i> <span className="hidden md:inline">Share</span>
+          </button>
+          <button onClick={onCancel} className="bg-white/5 text-white/40 px-4 md:px-0 md:w-full py-3 rounded-xl font-black text-[10px] md:text-sm hover:bg-white/10 transition-all uppercase border border-white/5 flex items-center justify-center space-x-2">
+            <i className="fa-solid fa-arrow-left"></i> <span className="hidden md:inline">Exit Editor</span>
           </button>
         </div>
       </div>

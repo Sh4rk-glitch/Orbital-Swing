@@ -367,9 +367,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     >
       <canvas ref={canvasRef} className="w-full h-full" />
       
-      {/* HUD UI */}
-      <div className="absolute top-0 left-0 w-full p-6 md:p-8 flex justify-between pointer-events-none">
-        <span className="text-cyan-400 font-black italic text-2xl md:text-4xl uppercase tracking-tighter drop-shadow-lg">SECTOR {level.id}</span>
+      {/* HUD UI - Completely clean of text except for controls help */}
+      <div className="absolute top-0 left-0 w-full p-6 md:p-8 flex justify-end pointer-events-none">
         <div className="flex space-x-3 md:space-x-4 pointer-events-auto">
           <button 
             onClick={(e) => { e.stopPropagation(); onRestart(); }} 
@@ -381,7 +380,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       </div>
       
       <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 text-white/30 font-black text-[10px] md:text-xs uppercase tracking-widest pointer-events-none">
-        {window.innerWidth < 768 ? 'Tap/Hold Screen' : 'Space or Left Click'} to Hook • R to Reset
+        {window.innerWidth < 768 ? 'Tap/Hold' : 'Space/Click'} to Hook • R to Reset
       </div>
     </div>
   );
