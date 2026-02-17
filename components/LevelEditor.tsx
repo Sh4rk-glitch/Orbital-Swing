@@ -109,15 +109,16 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
       const length = level.finishLineX;
       
       let currX = 400;
-      while (currX < length - 300) {
+      while (currX < length - 400) {
+        const spacing = 320 + Math.random() * 150;
         newHookPoints.push({
           id: `h-${currX}`,
           x: currX,
-          y: 150 + Math.random() * 300
+          y: 200 + Math.random() * 300
         });
 
-        if (Math.random() > 0.5) {
-          const obsX = currX + 200 + Math.random() * 100;
+        if (Math.random() > 0.6) {
+          const obsX = currX + spacing / 2;
           const isHazard = Math.random() > 0.7;
           newObstacles.push({
             id: `o-${obsX}`,
@@ -132,13 +133,13 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
         if (Math.random() > 0.8) {
           newBouncers.push({
             id: `b-${currX}`,
-            x: currX + 100,
-            y: 800,
+            x: currX + spacing / 2,
+            y: 850,
             width: 150,
             height: 30
           });
         }
-        currX += 450 + Math.random() * 150;
+        currX += spacing;
       }
 
       setLevel(prev => ({
@@ -157,7 +158,7 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
     const url = new URL(window.location.href);
     url.searchParams.set('levelData', encoded);
     navigator.clipboard.writeText(url.toString());
-    alert("Publish Link copied! Send this URL to anyone to let them play your Sector.");
+    alert("Publish Link copied! Anyone with this link can play your sector.");
   };
 
   if (isTesting) {
@@ -171,91 +172,89 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
         />
         <button 
           onClick={() => setIsTesting(false)} 
-          className="absolute top-8 left-8 bg-red-500 text-white px-8 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition-all uppercase z-[100]"
+          className="absolute top-8 left-8 bg-red-600 text-white px-6 py-3 rounded-2xl font-black shadow-2xl hover:scale-105 active:scale-95 transition-all uppercase z-[100]"
         >
-          Exit Test Mode
+          Stop Test
         </button>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full flex bg-[#050510] font-sans">
-      <div className="w-72 bg-[#0a0a1a] border-r border-white/5 p-6 flex flex-col space-y-4 shrink-0 overflow-y-auto">
-        <div>
-          <h2 className="text-2xl font-black italic text-cyan-400 leading-none mb-2 uppercase">Blueprint</h2>
-          <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest">Sector Editor v3.2</p>
+    <div className="w-full h-full flex flex-col md:flex-row bg-[#050510] font-sans">
+      {/* Sidebar for Desktop / Header for Mobile */}
+      <div className="w-full md:w-64 bg-[#0a0a1a] border-b md:border-b-0 md:border-r border-white/5 p-4 md:p-6 flex flex-row md:flex-col space-x-4 md:space-x-0 md:space-y-4 shrink-0 overflow-x-auto md:overflow-y-auto">
+        <div className="hidden md:block">
+          <h2 className="text-2xl font-black italic text-cyan-400 leading-none mb-1 uppercase">Blueprint</h2>
+          <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest">Sector Editor</p>
         </div>
 
-        <div className="space-y-2">
-          <p className="text-[10px] font-black text-white/40 uppercase tracking-widest px-2">Elements</p>
+        <div className="flex md:flex-col flex-row space-x-2 md:space-x-0 md:space-y-2">
           {[
             { id: 'ANCHOR', icon: 'fa-anchor', label: 'Anchor', color: 'bg-cyan-500' },
-            { id: 'WALL', icon: 'fa-bars', label: 'Solid Wall', color: 'bg-slate-500' },
+            { id: 'WALL', icon: 'fa-bars', label: 'Wall', color: 'bg-slate-500' },
             { id: 'HAZARD', icon: 'fa-bolt', label: 'Hazard', color: 'bg-red-500' },
-            { id: 'BOUNCER', icon: 'fa-chevron-up', label: 'Boost Pad', color: 'bg-blue-600' },
+            { id: 'BOUNCER', icon: 'fa-chevron-up', label: 'Boost', color: 'bg-blue-600' },
             { id: 'DELETE', icon: 'fa-eraser', label: 'Eraser', color: 'bg-white/10' },
           ].map(tool => (
             <button
               key={tool.id}
               onClick={() => setActiveTool(tool.id as Tool)}
-              className={`w-full flex items-center space-x-4 p-3 rounded-2xl transition-all border-2 ${activeTool === tool.id ? `${tool.color} text-black border-white` : 'bg-white/5 text-white/40 border-transparent hover:bg-white/10'}`}
+              className={`flex-1 md:w-full flex items-center justify-center md:justify-start md:space-x-4 p-3 rounded-xl transition-all border-2 shrink-0 ${activeTool === tool.id ? `${tool.color} text-black border-white` : 'bg-white/5 text-white/40 border-transparent hover:bg-white/10'}`}
             >
-              <i className={`fa-solid ${tool.icon} text-lg w-6`}></i>
-              <span className="font-bold text-sm uppercase">{tool.label}</span>
+              <i className={`fa-solid ${tool.icon} text-lg w-6 text-center`}></i>
+              <span className="hidden md:block font-bold text-xs uppercase">{tool.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="space-y-2 pt-4 border-t border-white/5">
+        <div className="flex md:flex-col flex-row space-x-2 md:space-x-0 md:space-y-2 md:pt-4 md:border-t md:border-white/5">
           <button 
             onClick={handleAutoGenerate} 
             disabled={isGenerating}
-            className={`w-full py-4 rounded-2xl font-black text-sm uppercase flex items-center justify-center space-x-2 transition-all shadow-xl
+            className={`px-4 md:px-0 md:w-full py-3 rounded-xl font-black text-[10px] md:text-sm uppercase flex items-center justify-center space-x-2 transition-all shadow-xl
               ${isGenerating ? 'bg-cyan-900/50 text-white/50 cursor-not-allowed' : 'bg-[#00D2FF] text-black hover:scale-105 active:scale-95'}`}
           >
             <i className={`fa-solid ${isGenerating ? 'fa-spinner fa-spin' : 'fa-gear'}`}></i>
-            <span>{isGenerating ? 'Generating...' : 'Auto-Generate'}</span>
+            <span className="hidden md:inline">{isGenerating ? 'Generating...' : 'Auto-Build'}</span>
           </button>
         </div>
 
-        <div className="mt-auto space-y-3">
-          <button onClick={() => setIsTesting(true)} className="w-full bg-yellow-500 text-black py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all uppercase flex items-center justify-center space-x-2">
-            <i className="fa-solid fa-play"></i> <span>Live Test</span>
+        <div className="flex md:flex-col flex-row space-x-2 md:space-x-0 md:space-y-3 mt-0 md:mt-auto">
+          <button onClick={() => setIsTesting(true)} className="bg-yellow-500 text-black px-4 md:px-0 md:w-full py-3 rounded-xl font-black text-[10px] md:text-sm hover:scale-105 transition-all uppercase flex items-center justify-center space-x-2">
+            <i className="fa-solid fa-play"></i> <span className="hidden md:inline">Test</span>
           </button>
-          <button onClick={() => onSave(level)} className="w-full bg-green-500 text-black py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all uppercase flex items-center justify-center space-x-2">
-            <i className="fa-solid fa-cloud-arrow-up"></i> <span>Save Locally</span>
+          <button onClick={() => onSave(level)} className="bg-green-500 text-black px-4 md:px-0 md:w-full py-3 rounded-xl font-black text-[10px] md:text-sm hover:scale-105 transition-all uppercase flex items-center justify-center space-x-2">
+            <i className="fa-solid fa-save"></i> <span className="hidden md:inline">Save</span>
           </button>
-          <button onClick={shareLevel} className="w-full bg-purple-600 text-white py-3 rounded-2xl font-black text-sm hover:bg-purple-500 transition-all uppercase border border-white/10 flex items-center justify-center space-x-2">
-            <i className="fa-solid fa-share-nodes"></i> <span>Publish (Link)</span>
+          <button onClick={shareLevel} className="bg-purple-600 text-white px-4 md:px-0 md:w-full py-3 rounded-xl font-black text-[10px] md:text-sm hover:bg-purple-500 transition-all uppercase border border-white/10 flex items-center justify-center space-x-2">
+            <i className="fa-solid fa-share"></i> <span className="hidden md:inline">Share</span>
           </button>
-          <button onClick={onCancel} className="w-full text-white/20 hover:text-white py-2 text-[10px] font-bold uppercase transition-all underline">Abort Session</button>
         </div>
       </div>
 
+      {/* Editor Main View */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <div className="bg-black/40 p-4 border-b border-white/5 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-               <span className="text-white/40 font-black text-xs uppercase tracking-tighter">Sector {level.id} Timeline</span>
+            <div className="flex items-center space-x-4 flex-1">
+               <span className="text-white/40 font-black text-[10px] uppercase tracking-tighter whitespace-nowrap">Sector {level.id}</span>
                <input 
                  type="range" 
                  min="0" 
                  max={Math.max(0, level.finishLineX - 800)} 
                  value={viewX} 
                  onChange={e => setViewX(parseInt(e.target.value))} 
-                 className="w-96 accent-cyan-500"
+                 className="flex-1 max-w-sm accent-cyan-500"
                />
             </div>
-            <div className="flex space-x-4">
-                <div className="text-right">
-                    <span className="text-[10px] font-bold text-white/20 uppercase block">Finish (X)</span>
-                    <input 
-                      type="number" 
-                      value={level.finishLineX} 
-                      onChange={e => setLevel({...level, finishLineX: parseInt(e.target.value)})}
-                      className="bg-transparent text-cyan-400 font-black text-right outline-none w-24"
-                    />
-                </div>
+            <div className="ml-4 flex items-center space-x-2">
+                <span className="text-[8px] font-bold text-white/20 uppercase hidden md:block">Finish (X)</span>
+                <input 
+                  type="number" 
+                  value={level.finishLineX} 
+                  onChange={e => setLevel({...level, finishLineX: parseInt(e.target.value) || 2000})}
+                  className="bg-transparent text-cyan-400 font-black text-right outline-none w-16 md:w-20 text-xs"
+                />
             </div>
         </div>
 
@@ -285,8 +284,8 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
           </div>
         </div>
         
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/60 px-6 py-2 rounded-full border border-white/10 text-[10px] font-bold text-white/40 uppercase pointer-events-none shadow-2xl backdrop-blur-sm">
-          Left Click: Tool • Right Click Drag: Pan • {Math.round(viewX)}px
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/70 px-4 md:px-6 py-2 rounded-full border border-white/10 text-[8px] md:text-[10px] font-bold text-white/50 uppercase pointer-events-none shadow-2xl backdrop-blur-md">
+          {window.innerWidth < 768 ? 'Tap Grid to Place' : 'Left Click: Place Tool • Right Click: Pan'}
         </div>
       </div>
     </div>

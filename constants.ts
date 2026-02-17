@@ -1,7 +1,7 @@
 
-export const GRAVITY = 1.0;
+export const GRAVITY = 0.85;
 export const PLAYER_RADIUS = 18;
-export const HOOK_SEARCH_RADIUS = 600;
+export const HOOK_SEARCH_RADIUS = 750;
 
 export const COLORS = {
   PLAYER: '#FFFFFF',
