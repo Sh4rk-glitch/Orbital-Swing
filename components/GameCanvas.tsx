@@ -1,12 +1,13 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Matter from 'matter-js';
-import { LevelData, HookPoint, ObstacleType } from '../types';
+import { LevelData, HookPoint, ObstacleType, Skin, Bouncer, Obstacle } from '../types';
 import { COLORS, PLAYER_RADIUS, HOOK_SEARCH_RADIUS, GRAVITY } from '../constants';
 import { sound } from '../utils/audio';
 
 interface GameCanvasProps {
   level: LevelData;
+  skin: Skin;
   onWin: () => void;
   onLose: () => void;
   onRestart: () => void;
@@ -14,6 +15,7 @@ interface GameCanvasProps {
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
   level, 
+  skin,
   onWin, 
   onLose, 
   onRestart 
@@ -51,7 +53,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     let closest: HookPoint | null = null;
     let minDist = HOOK_SEARCH_RADIUS;
 
-    level.hookPoints.forEach(hp => {
+    level.hookPoints.forEach((hp: HookPoint) => {
       const dx = hp.x - playerPos.x;
       const dy = hp.y - playerPos.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -64,11 +66,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     });
 
     if (closest) {
+      const target: HookPoint = closest;
       sound.playSwing();
-      activeHookPoint.current = closest;
+      activeHookPoint.current = target;
       const c = Matter.Constraint.create({ 
         bodyA: playerRef.current, 
-        pointB: { x: closest.x, y: closest.y }, 
+        pointB: { x: target.x, y: target.y }, 
         stiffness: 0.12, 
         damping: 0.02, 
         length: minDist * 0.75, // Slightly pull the player in for a "snappy" swing
@@ -158,7 +161,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     // Add static elements
     if (level.bouncers) {
-      level.bouncers.forEach(b => {
+      level.bouncers.forEach((b: Bouncer) => {
         Matter.Composite.add(engine.world, Matter.Bodies.rectangle(b.x, b.y, b.width, b.height, { 
           isStatic: true, label: 'bouncer', chamfer: { radius: 10 } 
         }));
@@ -166,7 +169,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
     
     if (level.obstacles) {
-      level.obstacles.forEach(obs => {
+      level.obstacles.forEach((obs: Obstacle) => {
         Matter.Composite.add(engine.world, Matter.Bodies.rectangle(obs.x, obs.y, obs.width, obs.height, { 
           isStatic: true, label: `obs-${obs.type}`, render: { visible: false } 
         }));
@@ -184,9 +187,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     });
 
-    Matter.Events.on(engine, 'collisionStart', (event) => {
+    Matter.Events.on(engine, 'collisionStart', (event: Matter.IEventCollision<Matter.Engine>) => {
       if (!gameActive.current) return;
-      event.pairs.forEach((pair) => {
+      event.pairs.forEach((pair: Matter.Pair) => {
         const bodies = [pair.bodyA, pair.bodyB];
         if (bodies.includes(player)) {
           const other = bodies.find(b => b !== player)!;
@@ -227,7 +230,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
       // Starfield parallax
-      starsRef.current.forEach(star => {
+      starsRef.current.forEach((star: {x: number, y: number, size: number, speed: number}) => {
         const sx = (star.x - playerPos.x * star.speed) % window.innerWidth;
         const rx = sx < 0 ? sx + window.innerWidth : sx;
         ctx.fillStyle = '#FFFFFF';
@@ -248,7 +251,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       // Draw World Objects
       const allBodies = Matter.Composite.allBodies(engine.world);
-      allBodies.forEach(body => {
+      allBodies.forEach((body: Matter.Body) => {
         const { x, y } = body.position;
         const { min, max } = body.bounds;
         const w = max.x - min.x;
@@ -298,7 +301,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
 
       // Draw Hooks
-      level.hookPoints.forEach(hp => {
+      level.hookPoints.forEach((hp: HookPoint) => {
         ctx.save();
         ctx.shadowBlur = 15; ctx.shadowColor = COLORS.ANCHOR;
         ctx.beginPath(); ctx.arc(hp.x + offsetX, hp.y, 11, 0, Math.PI * 2); ctx.fillStyle = COLORS.ANCHOR; ctx.fill();
@@ -320,9 +323,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const phase = Date.now() / 110;
       const swingFactor = !!constraintRef.current ? Math.sin(phase) * 1.8 : Math.sin(phase * 0.5) * 0.2;
       
-      ctx.beginPath(); ctx.arc(0, -25, 14, 0, Math.PI * 2); ctx.fillStyle = COLORS.PLAYER; ctx.fill(); ctx.stroke();
-      ctx.fillStyle = COLORS.VISOR; ctx.beginPath(); ctx.ellipse(0, -27, 8, 6, 0, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = COLORS.PLAYER; ctx.fillRect(-11, -14, 22, 32); ctx.strokeRect(-11, -14, 22, 32);
+      ctx.beginPath(); ctx.arc(0, -25, 14, 0, Math.PI * 2); ctx.fillStyle = skin.color; ctx.fill(); ctx.stroke();
+      ctx.fillStyle = skin.visorColor; ctx.beginPath(); ctx.ellipse(0, -27, 8, 6, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = skin.color; ctx.fillRect(-11, -14, 22, 32); ctx.strokeRect(-11, -14, 22, 32);
       ctx.beginPath(); ctx.moveTo(-8, 18); ctx.lineTo(-18 + swingFactor * 22, 48); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(8, 18); ctx.lineTo(18 + swingFactor * 22, 48); ctx.stroke();
       ctx.restore();

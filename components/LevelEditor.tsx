@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { LevelData, HookPoint, Obstacle, ObstacleType, Bouncer } from '../types';
+import { LevelData, HookPoint, Obstacle, ObstacleType, Bouncer, Skin } from '../types';
 import GameCanvas from './GameCanvas';
+import { SKINS } from '../constants';
 
 interface LevelEditorProps {
   initialLevel?: LevelData | null;
@@ -71,14 +72,14 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
 
     if (activeTool === 'DELETE') {
       const hitDist = 40;
-      setLevel(prev => {
-        const newHooks = prev.hookPoints.filter(h => Math.hypot(h.x - clickX, h.y - clickY) > hitDist);
-        const newObs = prev.obstacles?.filter(o => {
+      setLevel((prev: LevelData) => {
+        const newHooks = prev.hookPoints.filter((h: HookPoint) => Math.hypot(h.x - clickX, h.y - clickY) > hitDist);
+        const newObs = prev.obstacles?.filter((o: Obstacle) => {
           const withinX = clickX >= o.x - o.width/2 - 20 && clickX <= o.x + o.width/2 + 20;
           const withinY = clickY >= o.y - o.height/2 - 20 && clickY <= o.y + o.height/2 + 20;
           return !(withinX && withinY);
         });
-        const newBouncers = prev.bouncers?.filter(b => {
+        const newBouncers = prev.bouncers?.filter((b: Bouncer) => {
           const withinX = clickX >= b.x - b.width/2 - 20 && clickX <= b.x + b.width/2 + 20;
           const withinY = clickY >= b.y - b.height/2 - 20 && clickY <= b.y + b.height/2 + 20;
           return !(withinX && withinY);
@@ -90,13 +91,13 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
 
     const id = Date.now().toString();
     if (activeTool === 'ANCHOR') {
-      setLevel(prev => ({ ...prev, hookPoints: [...prev.hookPoints, { id, x: clickX, y: clickY }] }));
+      setLevel((prev: LevelData) => ({ ...prev, hookPoints: [...prev.hookPoints, { id, x: clickX, y: clickY }] }));
     } else if (activeTool === 'WALL') {
-      setLevel(prev => ({ ...prev, obstacles: [...(prev.obstacles || []), { id, x: clickX, y: clickY, width: 40, height: 400, type: ObstacleType.WALL }] }));
+      setLevel((prev: LevelData) => ({ ...prev, obstacles: [...(prev.obstacles || []), { id, x: clickX, y: clickY, width: 40, height: 400, type: ObstacleType.WALL }] }));
     } else if (activeTool === 'HAZARD') {
-      setLevel(prev => ({ ...prev, obstacles: [...(prev.obstacles || []), { id, x: clickX, y: clickY, width: 20, height: 400, type: ObstacleType.LASER }] }));
+      setLevel((prev: LevelData) => ({ ...prev, obstacles: [...(prev.obstacles || []), { id, x: clickX, y: clickY, width: 20, height: 400, type: ObstacleType.LASER }] }));
     } else if (activeTool === 'BOUNCER') {
-      setLevel(prev => ({ ...prev, bouncers: [...(prev.bouncers || []), { id, x: clickX, y: clickY, width: 150, height: 30 }] }));
+      setLevel((prev: LevelData) => ({ ...prev, bouncers: [...(prev.bouncers || []), { id, x: clickX, y: clickY, width: 150, height: 30 }] }));
     }
   };
 
@@ -143,7 +144,7 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
         currX += spacing;
       }
 
-      setLevel(prev => ({
+      setLevel((prev: LevelData) => ({
         ...prev,
         hookPoints: newHookPoints,
         obstacles: newObstacles,
@@ -167,6 +168,7 @@ const LevelEditor: React.FC<LevelEditorProps> = ({ initialLevel, onSave, onCance
       <div className="w-full h-full relative">
         <GameCanvas 
           level={level} 
+          skin={SKINS[0]}
           onWin={() => setIsTesting(false)} 
           onLose={() => setIsTesting(false)} 
           onRestart={() => setIsTesting(false)} 

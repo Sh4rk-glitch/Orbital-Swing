@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import GameCanvas from './components/GameCanvas';
 import LevelEditor from './components/LevelEditor';
-import { GameState, LevelData } from './types';
+import Shop from './components/Shop';
+import { GameState, LevelData, Skin } from './types';
 import { getLevel, getLevelsCount } from './levels';
+import { SKINS } from './constants';
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(GameState.MENU);
@@ -11,6 +13,16 @@ const App: React.FC = () => {
   const [restartKey, setRestartKey] = useState(0);
   const [levelsCount, setLevelsCount] = useState(getLevelsCount());
   const [editingLevel, setEditingLevel] = useState<LevelData | null>(null);
+
+  // Shop State
+  const [coins, setCoins] = useState<number>(() => parseInt(localStorage.getItem('orbital_coins') || '0', 10));
+  const [ownedSkins, setOwnedSkins] = useState<string[]>(() => {
+    const saved = localStorage.getItem('orbital_owned_skins');
+    return saved ? JSON.parse(saved) : ['default'];
+  });
+  const [activeSkinId, setActiveSkinId] = useState<string>(() => localStorage.getItem('orbital_active_skin') || 'default');
+
+  const activeSkin = SKINS.find(s => s.id === activeSkinId) || SKINS[0];
 
   // Load level from URL if present (for sharing)
   useEffect(() => {
@@ -34,6 +46,11 @@ const App: React.FC = () => {
   }, [levelsCount]);
 
   const handleWin = useCallback(() => {
+    // Award coins
+    const newCoins = coins + 10;
+    setCoins(newCoins);
+    localStorage.setItem('orbital_coins', newCoins.toString());
+
     if (currentLevelId === unlockedLevel) {
       const next = unlockedLevel + 1;
       setUnlockedLevel(next);
@@ -45,7 +62,25 @@ const App: React.FC = () => {
       }
     }
     setGameState(GameState.LEVEL_COMPLETE);
-  }, [currentLevelId, unlockedLevel, levelsCount]);
+  }, [currentLevelId, unlockedLevel, levelsCount, coins]);
+
+  const handleBuySkin = (skin: Skin) => {
+    if (coins >= skin.price && !ownedSkins.includes(skin.id)) {
+      const newCoins = coins - skin.price;
+      const newOwned = [...ownedSkins, skin.id];
+      setCoins(newCoins);
+      setOwnedSkins(newOwned);
+      localStorage.setItem('orbital_coins', newCoins.toString());
+      localStorage.setItem('orbital_owned_skins', JSON.stringify(newOwned));
+    }
+  };
+
+  const handleSelectSkin = (skinId: string) => {
+    if (ownedSkins.includes(skinId)) {
+      setActiveSkinId(skinId);
+      localStorage.setItem('orbital_active_skin', skinId);
+    }
+  };
 
   const startLevel = (id: number) => {
     setCurrentLevelId(id);
@@ -82,7 +117,7 @@ const App: React.FC = () => {
     e.stopPropagation();
     if (confirm(`Reset Sector ${id} to default mission parameters?`)) {
       localStorage.removeItem(`orbital_level_${id}`);
-      setRestartKey(k => k + 1); // Refresh UI
+      setRestartKey((k: number) => k + 1); // Refresh UI
     }
   };
 
@@ -109,6 +144,13 @@ const App: React.FC = () => {
               className="bg-[#00D2FF] text-black py-6 rounded-3xl text-2xl font-black shadow-[0_0_50px_rgba(0,210,255,0.4)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
             >
               LAUNCH
+            </button>
+            <button 
+              onClick={() => setGameState(GameState.SHOP)}
+              className="bg-white/5 text-white py-4 rounded-2xl text-lg font-black border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center space-x-3"
+            >
+              <i className="fa-solid fa-cart-shopping text-cyan-400"></i>
+              <span>EQUIPMENT</span>
             </button>
             <button 
               onClick={() => openEditorForLevel(levelsCount + 1)}
@@ -168,14 +210,14 @@ const App: React.FC = () => {
                     {!isLocked && (
                       <div className="absolute -top-3 -right-3 flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                         <button 
-                          onClick={(e) => { e.stopPropagation(); openEditorForLevel(id); }}
+                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); openEditorForLevel(id); }}
                           className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-cyan-400 hover:scale-110 transition-all"
                         >
                           <i className="fa-solid fa-pen text-sm"></i>
                         </button>
                         {isModified && (
                           <button 
-                            onClick={(e) => resetLevel(id, e)}
+                            onClick={(e: React.MouseEvent) => resetLevel(id, e)}
                             className="w-10 h-10 bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl hover:bg-red-500 hover:scale-110 transition-all"
                           >
                             <i className="fa-solid fa-trash-can text-sm"></i>
@@ -211,14 +253,27 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* SHOP STATE */}
+      {gameState === GameState.SHOP && (
+        <Shop 
+          coins={coins}
+          ownedSkins={ownedSkins}
+          activeSkinId={activeSkinId}
+          onBuySkin={handleBuySkin}
+          onSelectSkin={handleSelectSkin}
+          onClose={() => setGameState(GameState.MENU)}
+        />
+      )}
+
       {/* PLAYING STATE */}
       {gameState === GameState.PLAYING && (
         <GameCanvas 
           key={restartKey} 
           level={getLevel(currentLevelId)} 
+          skin={activeSkin}
           onWin={handleWin} 
           onLose={() => setGameState(GameState.GAMEOVER)} 
-          onRestart={() => setRestartKey(k => k + 1)} 
+          onRestart={() => setRestartKey((k: number) => k + 1)} 
         />
       )}
 
@@ -247,7 +302,11 @@ const App: React.FC = () => {
       {gameState === GameState.LEVEL_COMPLETE && (
         <div className="absolute inset-0 bg-cyan-950/80 backdrop-blur-2xl flex flex-col items-center justify-center z-50 animate-in zoom-in duration-300">
           <div className="bg-[#050510] border-8 border-[#00D2FF] p-24 rounded-[4rem] text-center shadow-[0_0_100px_rgba(0,210,255,0.2)]">
-            <h2 className="text-8xl font-black mb-16 italic text-[#00D2FF] uppercase">Sector Clear</h2>
+            <h2 className="text-8xl font-black mb-4 italic text-[#00D2FF] uppercase">Sector Clear</h2>
+            <div className="flex items-center justify-center space-x-3 mb-12">
+              <i className="fa-solid fa-coins text-yellow-500 text-4xl"></i>
+              <span className="text-4xl font-black text-white">+10 COINS</span>
+            </div>
             <div className="flex space-x-6 justify-center">
               <button 
                 onClick={() => startLevel(currentLevelId + 1)} 
